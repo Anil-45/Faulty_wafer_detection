@@ -76,8 +76,7 @@ class Utils:
                 try:
                     if file.index(str(self.cluster_number)) != -1:
                         model_name = file
-                except ValueError as exception:
-                    self.logger.info(exception)
+                except ValueError:
                     continue
 
             model_name = model_name.split(".")[0]

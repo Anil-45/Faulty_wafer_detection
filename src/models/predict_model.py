@@ -50,6 +50,7 @@ class Prediction:
 
             data["clusters"] = clusters
             clusters = data["clusters"].unique()
+            path = f"{self.base}/data/processed/test/Predictions.csv"
             for i in clusters:
                 cluster_data = data[data["clusters"] == i]
                 wafer_names = list(cluster_data["Wafer"])
@@ -62,10 +63,17 @@ class Prediction:
                 col_names = ["Wafer", "Prediction"]
                 result_data = list(zip(wafer_names, result))
                 result = pd.DataFrame(result_data, columns=col_names)
-                path = f"{self.base}/data/processed/test/Predictions.csv"
+                result["Wafer"] = result["Wafer"].astype(int)
+                result["Prediction"] = result["Prediction"].astype(int)
                 result.Prediction.replace({0: -1}, inplace=True)
                 # appends result to prediction file
-                result.to_csv(path, header=True, mode="a+")
+                result.to_csv(path, header=True, mode="a+", index=False)
+
+            data = pd.read_csv(path)
+            data = data.sort_values(by="Wafer")
+            data.drop_duplicates(inplace=True, keep=False)
+            data = data[data["Prediction"].astype(int) == 1]
+            data = data.reset_index(drop=True)
             self.logger.info("End of Prediction")
 
         except Exception as exception:
@@ -73,4 +81,4 @@ class Prediction:
             self.logger.exception(exception)
             raise Exception from exception
 
-        return path, result.head().to_json(orient="records")
+        return path, data

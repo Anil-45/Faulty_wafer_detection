@@ -4,6 +4,7 @@ import shutil
 import sqlite3
 import os
 import csv
+import pandas as pd
 
 from ..logger import AppLogger
 
@@ -17,7 +18,7 @@ class DatabaseOperation:
         if not os.path.exists(f"{path}/logs/"):
             os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/database.log")
-
+        self.mode = mode
         if "train" == str(mode):
             self.path = f"{path}/data/processed/train/"
             self.rejected_dir = f"{path}/data/interim/train/rejected/"
@@ -26,6 +27,15 @@ class DatabaseOperation:
             self.path = f"{path}/data/processed/test/"
             self.rejected_dir = f"{path}/data/interim/test/rejected/"
             self.accepted_dir = f"{path}/data/interim/test/accepted/"
+
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+
+        if not os.path.exists(self.accepted_dir):
+            os.makedirs(self.accepted_dir)
+
+        if not os.path.exists(self.rejected_dir):
+            os.makedirs(self.rejected_dir)
 
     def db_connection(self, db_name: str) -> sqlite3.Connection:
         """Database Connection.
@@ -51,8 +61,23 @@ class DatabaseOperation:
         """
         try:
             connection = self.db_connection(db_name=db_name)
-            query = "DROP TABLE IF EXISTS accepted;"
-            connection.execute(query)
+            if "train" == str(self.mode):
+                # if train, append the data to old data
+                query = (
+                    "SELECT count(name)  FROM sqlite_master "
+                    "WHERE type = 'table' AND name = 'accepted'"
+                )
+                cur = connection.cursor()
+                cur.execute(query)
+                if 1 == cur.fetchone()[0]:
+                    connection.close()
+                    self.logger.info("table already exists")
+                    return
+            else:
+                # if test, we can remove old data
+                query = "DROP TABLE IF EXISTS accepted;"
+                connection.execute(query)
+
             query = ""
 
             for key, value in column_names.items():
@@ -80,23 +105,18 @@ class DatabaseOperation:
         """Insert the accepted files into the above created table."""
         connection = self.db_connection(db_name=db_name)
         files = os.listdir(self.accepted_dir)
-        insert_query = "INSERT INTO accepted values "
         for file in files:
             file_path = str(self.accepted_dir) + str(file)
             try:
-                with open(file_path, "r", encoding="utf-8") as desc:
-                    next(desc)
-                    reader = csv.reader(desc, delimiter="\n")
-                    for line in enumerate(reader):
-                        for list_ in line[1]:
-                            try:
-                                query = f"{insert_query}({list_})"
-                                connection.execute(query)
-                                connection.commit()
-
-                            except Exception as exception:
-                                self.logger.exception(exception)
-                                raise Exception from exception
+                data = pd.read_csv(file_path)
+                data.rename(columns={"Unnamed: 0": "Wafer"}, inplace=True)
+                data.rename(columns={"Good/Bad": "Output"}, inplace=True)
+                data.to_sql(
+                    "accepted",
+                    connection,
+                    if_exists="append",
+                    index=False
+                )
 
             except Exception as exception:
                 self.logger.exception(exception)

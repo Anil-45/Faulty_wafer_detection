@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Faulty Wafer Detection</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+    <style>
+        h4{font-family:Lato,'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;}
+        .title{color:#12bd26;}
+        .container-fluid{width:70%;}
+		.result-box{
+            width:100%;
+            margin-left:auto;
+            margin-right:auto;
+            height: 260px;
+            padding:10px;
+            overflow-y: auto;
+        }
+        .result-box p{text-align:left;}
+        #loading {
+			position: fixed;
+			left: 0px;
+			top: 0px;
+			width: 100%;
+			height: 100%;
+			z-index: 9999999999;
+			overflow: hidden;
+			background: rgba(255, 255, 255, 0.7);
+		}
+		.load{
+			height:100%;
+			background-color:#ffffffbe;
+			position:absolute;
+			width:100%;
+			z-index:1000;
+			display:none;
+		}
+		.loader {
+		  border: 10px solid #f3f3f3;
+		  border-radius: 50%;
+		  border-top: 10px solid #3498db;
+		  width: 30px;
+		  height: 30px;
+		  margin-left:auto;
+		  margin-right:auto;
+		  margin-top:30%;
+		  -webkit-animation: spin 2s linear infinite; /* Safari */
+		  animation: spin 2s linear infinite;
+		}
+		@-webkit-keyframes spin {
+		  0% { -webkit-transform: rotate(0deg); }
+		  100% { -webkit-transform: rotate(360deg); }
+		}
+
+		@keyframes spin {
+		  0% { transform: rotate(0deg); }
+		  100% { transform: rotate(360deg); }
+		}
+
+		@media (min-width:768px){
+			header.masthead{
+				padding-top:4rem;
+				padding-bottom:4rem;
+			}
+			header.masthead h1{
+				font-size:3rem;
+			}
+		}
+		input[type="file"] {
+			display: none;
+		}
+    </style>
+</head> 
+    
+<body>
+    <section class="testimonials text-center">
+		<div class="container-fluid">
+			<h4 class="my-4 title">Faulty Wafer Detection</h4>
+			<div class="row">
+				<div class="col-md-3 col-xs-12">					
+					<form action="/upload_train" enctype="multipart/form-data" id="custom_train">
+						<label for="train_files" class="form-control btn-primary">Upload Train CSV</label>
+						<input type="file" name="files" multiple="true" id="train_files" accept=".csv" required/>
+						<input type="submit" value="Train" class="form-control btn-primary"/>
+					</form>
+					<br>
+					<form method="post" id="datafetch_form" enctype="multipart/form-data">
+                        <div class="">
+                            <button class="form-control btn-primary" id="defaulttrain">Default Train</button>
+                        </div>
+                        <br>
+						<div class="">
+							<button class="form-control btn-primary" id="defaultpredict">Default Predict</button>
+						</div>
+					</form>
+					<br>
+					<form action="/upload_test" enctype="multipart/form-data" id="custom_test">
+						<label for="pred_files" class="form-control btn-primary">Upload Test CSV</label>
+						<input type="file" name="files" multiple="true" id="pred_files" accept=".csv" required/>
+						<input type="submit" value="Predict" class="form-control btn-primary" id="predfiles"/>
+					</form>
+					<br>
+					<div class="">
+						<a href="/download">
+							<button class="form-control btn-primary" id="download">Download Predictions</button>
+						</a>
+					</div>
+				</div>
+				<div class="res-container  col-md-9 col-xs-12">
+					<div class="result-box shadow rounded-lg">
+						<h6 class="title">Results</h6>
+						<div class="json-result">
+						</div>
+					</div>
+				</div>
+			</div>						
+		</div>
+	</section>
+
+	<div id="loading"><div class="loader"></div></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+	<script>
+		$( document ).ajaxStart(function() {
+			$( "#loading" ).show();
+		});
+		$( document ).ajaxStop(function() {
+			$( "#loading" ).hide();
+		});
+		$(document).ready(function(){
+			$('#loading').hide();
+			$('#custom_train').submit(function(e){
+				e.preventDefault();
+				var formData = new FormData($(this)[0]);
+				$('#loading').show();
+				$.ajax({
+					url: $(this).attr("action"),
+					type: "POST",
+					data: formData,
+					async: false,
+					cache: false,
+					contentType: false,
+					processData: false,
+					error: function(XMLHttpRequest, textStatus, errorThrown) { 
+						alert("Status: " + textStatus); alert("Error: " + errorThrown);
+					},
+					success: function(response){
+						$(".json-result").html('<pre>' + response + '</pre>');
+					}
+				});
+			});
+			$("#defaulttrain").click(function(e){
+				e.preventDefault();
+				$.ajax({
+					contentType: "application/json",
+					url : "/train",
+					type: "POST",
+					error: function(XMLHttpRequest, textStatus, errorThrown) { 
+						alert("Status: " + textStatus); alert("Error: " + errorThrown);
+					},
+					success: function(response){
+						$(".json-result").html('<pre>' + response + '</pre>');
+					}
+				});
+			});
+			$("#defaultpredict").click(function(e){
+				e.preventDefault();
+				$.ajax({
+					contentType: "application/json",
+					url : "/predict",
+					type: "POST",
+					error: function(XMLHttpRequest, textStatus, errorThrown) { 
+        				alert("Status: " + textStatus); alert("Error: " + errorThrown);
+    				},
+					success: function(response){
+						$(".json-result").html('<pre>' + response + '</pre>');
+					},
+				});
+			});
+			$('#custom_test').submit(function(e){
+				e.preventDefault();
+				var formData = new FormData($(this)[0]);
+				$('#loading').show();
+				$.ajax({
+					url: $(this).attr("action"),
+					type: "POST",
+					data: formData,
+					async: false,
+					cache: false,
+					contentType: false,
+					processData: false,
+					error: function(XMLHttpRequest, textStatus, errorThrown) { 
+						alert("Status: " + textStatus); alert("Error: " + errorThrown);
+					},
+					success: function(response){
+						$(".json-result").html('<pre>' + response + '</pre>');
+					}
+				});
+			});
+		});
+	</script>
+</body>
+</html>

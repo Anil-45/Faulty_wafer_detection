@@ -136,17 +136,17 @@ class DataValidation:
             archive_dir = self.archive_dir
             if not os.path.isdir(archive_dir):
                 os.makedirs(archive_dir)
-            else:
-                dest = f"{archive_dir}/archive_{date}_{time}"
-                if not os.path.isdir(dest):
-                    os.makedirs(dest)
-                files = os.listdir(source)
-                for file in files:
-                    if file not in os.listdir(dest):
-                        shutil.move(source + file, dest)
 
-                self.logger.info("moved the rejected data to archive")
-                self.delete_interim_rejected_dir()
+            dest = f"{archive_dir}/archive_{date}_{time}"
+            if not os.path.isdir(dest):
+                os.makedirs(dest)
+            files = os.listdir(source)
+            for file in files:
+                if file not in os.listdir(dest):
+                    shutil.move(source + file, dest)
+
+            self.logger.info("moved the rejected data to archive")
+            self.delete_interim_rejected_dir()
 
         except OSError as exception:
             self.logger.exception(exception)

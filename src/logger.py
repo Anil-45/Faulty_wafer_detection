@@ -11,7 +11,8 @@ class AppLogger:
     def __init__(self) -> None:
         """Initialize the required variables."""
         self.__log_format = (
-            "%(asctime)s - [%(levelname)s] - [%(filename)s] - %(message)s"
+            "%(asctime)s - [%(levelname)s] - [%(filename)s]"
+            "- [%(lineno)s] - %(message)s"
         )
 
     def get_file_handler(self, log_file_name):
@@ -46,6 +47,9 @@ class AppLogger:
             logging: A logging object to use when logging in the code
         """
         logger = logging.getLogger(name)
+        if logger.hasHandlers():
+            # Logger is already configured, remove all handlers
+            logger.handlers = []
         logger.addHandler(self.get_file_handler(name))
         logger.addHandler(self.get_stream_handler())
         logger.setLevel(level)

@@ -46,7 +46,7 @@ class Train:
             # create separate features and labels
             X, Y = preprocessor.separate_label_feature(data, "Output")
             Y = Y.replace({-1: 0})
-            # Y = np.array(Y).reshape(0, 1)
+
             # check if missing values are present in the dataset
             is_null_present = preprocessor.is_null_present(X)
 
