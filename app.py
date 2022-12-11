@@ -17,7 +17,7 @@ from src.logger import AppLogger
 os.putenv("LANG", "en_US.UTF-8")
 os.putenv("LC_ALL", "en_US.UTF-8")
 
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 5000
 PRED_FOLDER = "data/processed/test/"
 PRED_FILE = "Predictions.csv"
@@ -172,5 +172,6 @@ if "__main__" == __name__:
         os.makedirs("logs/")
     logger = AppLogger().get_logger("logs/app.log")
 
-    server = simple_server.make_server(HOST, port=PORT, app=app)
+    port = int(os.getenv("PORT", PORT))
+    server = simple_server.make_server(HOST, port=port, app=app)
     server.serve_forever()
