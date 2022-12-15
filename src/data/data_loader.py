@@ -1,5 +1,6 @@
 """Data loader."""
 import os
+
 import pandas as pd
 
 

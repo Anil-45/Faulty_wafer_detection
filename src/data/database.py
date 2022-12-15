@@ -1,9 +1,10 @@
 """Database."""
 
+import csv
+import os
 import shutil
 import sqlite3
-import os
-import csv
+
 import pandas as pd
 
 from ..logger import AppLogger
@@ -15,8 +16,6 @@ class DatabaseOperation:
     def __init__(self, mode: str) -> None:
         """Initialize required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/database.log")
         self.mode = mode
         if "train" == str(mode):
@@ -112,10 +111,7 @@ class DatabaseOperation:
                 data.rename(columns={"Unnamed: 0": "Wafer"}, inplace=True)
                 data.rename(columns={"Good/Bad": "Output"}, inplace=True)
                 data.to_sql(
-                    "accepted",
-                    connection,
-                    if_exists="append",
-                    index=False
+                    "accepted", connection, if_exists="append", index=False
                 )
 
             except Exception as exception:
@@ -124,11 +120,10 @@ class DatabaseOperation:
                 self.logger.info("error while inserting to table")
                 shutil.move(file_path, self.rejected_dir)
                 self.logger.info("%s file moved to rejected dir", file)
-                connection.close()
 
         connection.close()
 
-    def db_select_data_to_csv(self, db_name: str) -> None:
+    def db_export_data_to_csv(self, db_name: str) -> None:
         """Export the data in accepted table as a CSV file."""
         try:
             connection = self.db_connection(db_name=db_name)

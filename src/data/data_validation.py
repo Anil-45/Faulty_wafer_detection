@@ -8,10 +8,11 @@ import os
 import re
 import shutil
 from datetime import datetime
+
 import pandas as pd
 
-from . import constants as const
 from ..logger import AppLogger
+from . import constants as const
 
 
 class DataValidation:
@@ -37,9 +38,7 @@ class DataValidation:
             self.rejected_dir = f"{self.path}/data/interim/test/rejected/"
             self.archive_dir = f"{self.path}/data/processed/test/archive"
 
-        self.column_dict = dict()
-        if not os.path.exists(f"{self.path}/logs/"):
-            os.makedirs(f"{self.path}/logs/")
+        self.column_dict = {}
         logger_path = f"{self.path}/logs/data_validation.log"
         self.logger = AppLogger().get_logger(logger_path)
 
@@ -50,7 +49,6 @@ class DataValidation:
                 schema_dict = json.load(file)
                 file.close()
 
-            # file_name_pattern = schema_dict[const.STR_FILE_NAME]
             self.date_stamp_len = schema_dict[const.STR_DATE_STAMP_LEN]
             self.time_stamp_len = schema_dict[const.STR_TIME_STAMP_LEN]
             self.number_of_columns = schema_dict[const.STR_NO_OF_COLUMNS]
@@ -137,13 +135,15 @@ class DataValidation:
             if not os.path.isdir(archive_dir):
                 os.makedirs(archive_dir)
 
-            dest = f"{archive_dir}/archive_{date}_{time}"
-            if not os.path.isdir(dest):
-                os.makedirs(dest)
             files = os.listdir(source)
-            for file in files:
-                if file not in os.listdir(dest):
-                    shutil.move(source + file, dest)
+            if 0 < len(files):
+                dest = f"{archive_dir}/archive_{date}_{time}"
+                if not os.path.isdir(dest):
+                    os.makedirs(dest)
+
+                for file in files:
+                    if file not in os.listdir(dest):
+                        shutil.move(source + file, dest)
 
             self.logger.info("moved the rejected data to archive")
             self.delete_interim_rejected_dir()

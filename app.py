@@ -1,18 +1,23 @@
 """Application entry point."""
 
-from wsgiref import simple_server
-
 import os
 from datetime import datetime
-from flask import Flask, request, render_template, Response
-from flask import send_from_directory
-from flask_cors import CORS, cross_origin
+from wsgiref import simple_server
+
 import flask_monitoringdashboard as dashboard
+from flask import (
+    Flask,
+    Response,
+    render_template,
+    request,
+    send_from_directory,
+)
+from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 
-from src.models.train_model import Train
-from src.models.predict_model import Prediction
 from src.logger import AppLogger
+from src.models.predict_model import Prediction
+from src.models.train_model import Train
 
 os.putenv("LANG", "en_US.UTF-8")
 os.putenv("LC_ALL", "en_US.UTF-8")
@@ -50,7 +55,7 @@ def _train(path: str) -> Response:
             logger.info("Training complete")
     except Exception as exception:
         logger.exception(exception)
-        return Response("Something went wrong! %s\n", str(exception))
+        return Response(f"Something went wrong! {str(exception)}\n")
     return Response("Training completed.")
 
 
@@ -61,6 +66,12 @@ def default_train():
 
     Performs data validation, handling and trains model.
     """
+    # remove the old data to avoid duplication of same dataset
+    path = str(os.path.abspath(os.path.dirname(__file__)))
+    path = f"{path}/data/processed/train/train.db"
+    if os.path.exists(path=path):
+        logger.info(path)
+        os.remove(path)
     return _train(path=DEFAULT_TRAIN)
 
 
@@ -72,11 +83,11 @@ def _predict(path: str) -> Response:
         else:
             logger.info("Started Prediction")
             logger.info(path)
-            path, predictions = Prediction(path=path).predict()
+            predictions = Prediction(path=path).predict()
             logger.info("Completed Prediction")
             return Response(predictions.to_html())
     except Exception as exception:
-        return Response("Something went wrong! %s\n" % str(exception))
+        return Response(f"Something went wrong! {str(exception)}\n")
 
 
 @app.route("/predict", methods=["POST"])

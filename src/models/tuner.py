@@ -1,9 +1,10 @@
 """Tuner."""
 
 import os
+
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import roc_auc_score, accuracy_score
 from xgboost import XGBClassifier
 
 from ..logger import AppLogger
@@ -15,11 +16,7 @@ class ModelFinder:
     def __init__(self) -> None:
         """Initialize required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/tuner.log")
-        self.clf = RandomForestClassifier()
-        self.xgb = XGBClassifier(objective="binary:logistic")
 
     def get_best_params_for_random_forest(
         self, train_x, train_y
@@ -36,7 +33,10 @@ class ModelFinder:
 
             # Creating an object of the Grid Search class
             grid = GridSearchCV(
-                estimator=self.clf, param_grid=param_grid, cv=5, verbose=3
+                estimator=RandomForestClassifier(),
+                param_grid=param_grid,
+                cv=5,
+                verbose=3,
             )
             # finding the best parameters
             grid.fit(train_x, train_y)
@@ -94,7 +94,7 @@ class ModelFinder:
                 max_depth=max_depth,
                 n_estimators=n_estimators,
             )
-            # training the mew model
+            # training the new model
             xgb.fit(train_x, train_y)
             self.logger.info("XGBoost best params: %s", str(grid.best_params_))
             return xgb

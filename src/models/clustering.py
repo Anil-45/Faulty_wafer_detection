@@ -1,15 +1,14 @@
 """Clustering."""
 
 import os
-import matplotlib
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from kneed import KneeLocator
-from .utils import Utils
-from . import constants as const
-from ..logger import AppLogger
 
-matplotlib.use("agg")
+from kneed import KneeLocator
+from sklearn.cluster import KMeans
+
+from ..logger import AppLogger
+from ..visualization import plot_data
+from . import constants as const
+from .utils import Utils
 
 
 class KMeansClustering:
@@ -18,8 +17,6 @@ class KMeansClustering:
     def __init__(self) -> None:
         """Initialize required variables."""
         self.path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{self.path}/logs/"):
-            os.makedirs(f"{self.path}/logs/")
         logger_path = f"{self.path}/logs/clustering.log"
         self.logger = AppLogger().get_logger(logger_path)
 
@@ -29,20 +26,22 @@ class KMeansClustering:
         Raises:
             Exception
         """
-        wcss = list()
+        wcss = []
         try:
             for i in range(1, const.MAX_NUMBER_OF_CLUSTERS):
                 model = KMeans(n_clusters=i, init="k-means++", random_state=42)
                 model.fit(data)
                 wcss.append(model.inertia_)
 
-            plt.plot(range(1, const.MAX_NUMBER_OF_CLUSTERS), wcss)
-
-            # plot elbow
-            plt.title("Elbow Plot")
-            plt.xlabel("Number of clusters")
-            plt.ylabel("WCSS")
-            plt.savefig(f"{self.path}/reports/figures/K_Means_Elbow.PNG")
+            # elbow plot
+            plot_data(
+                x_data=range(1, const.MAX_NUMBER_OF_CLUSTERS),
+                y_data=wcss,
+                x_label="Number of clusters",
+                y_label="WCSS",
+                title="Elbow plot",
+                path=f"{self.path}/reports/figures/KMeans_Elbow.png",
+            )
 
             # finding optimum value
             knee = KneeLocator(

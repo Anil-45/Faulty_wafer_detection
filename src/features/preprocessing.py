@@ -1,8 +1,10 @@
 """Preprocessing."""
 
 import os
-from pandas import DataFrame
+from typing import Tuple
+
 import numpy as np
+from pandas import DataFrame, Series
 from sklearn.impute import KNNImputer
 
 from ..logger import AppLogger
@@ -14,8 +16,6 @@ class Preprocessor:
     def __init__(self, mode: str) -> None:
         """Initialize required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/preprocessing.log")
 
         if "train" == str(mode):
@@ -35,15 +35,17 @@ class Preprocessor:
             self.logger.exception(exception)
             raise Exception from exception
 
-    def separate_label_feature(self, data: DataFrame, label_column_name: str):
+    def separate_label_feature(
+        self, data: DataFrame, label_column_name: str
+    ) -> Tuple[DataFrame, Series]:
         """Separate the features and label columns."""
         try:
-            X = data.drop(
-                labels=label_column_name, axis=1
-            )  # drop the columns specified and separate the feature columns
-            Y = data[label_column_name]  # Filter the Label columns
+            # drop the columns specified and separate the feature columns
+            features = data.drop(columns=[label_column_name])
+            # Filter the Label column
+            labels = data[label_column_name]
             self.logger.info("label separation Successful")
-            return X, Y
+            return features, labels
 
         except Exception as exception:
             self.logger.error("separate label features failed")

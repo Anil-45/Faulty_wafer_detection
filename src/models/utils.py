@@ -1,7 +1,7 @@
 """Model Utils."""
 
-import pickle
 import os
+import pickle
 import shutil
 
 from ..logger import AppLogger
@@ -13,13 +13,11 @@ class Utils:
     def __init__(self) -> None:
         """Initialize the required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/utils.log")
         self.model_directory = f"{path}/models/"
         self.cluster_number = 0
-        self.list_of_model_files = list()
-        self.list_of_files = list()
+        self.list_of_model_files = []
+        self.list_of_files = []
 
     def save_model(self, model, filename: str) -> None:
         """Save the model to a file.

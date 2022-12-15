@@ -1,10 +1,10 @@
 """Make dataset."""
 import os
 
+from ..logger import AppLogger
 from .data_validation import DataValidation
 from .database import DatabaseOperation
 from .transform import DataTransform
-from ..logger import AppLogger
 
 
 def make_dataset(path: str, mode: str) -> None:
@@ -21,8 +21,6 @@ def make_dataset(path: str, mode: str) -> None:
     data_transform = DataTransform(mode)
     database = DatabaseOperation(mode)
     path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-    if not os.path.exists(f"{path}/logs/"):
-        os.makedirs(f"{path}/logs/")
     logger = AppLogger().get_logger(f"{path}/logs/make_dataset.log")
 
     try:
@@ -38,7 +36,6 @@ def make_dataset(path: str, mode: str) -> None:
         logger.info("data transformation completed")
 
         logger.info("creating %sing database and tables.", mode)
-        # create database with given name, if present open the connection!
         # Create table with columns given in schema
         database.db_create_table(mode, column_names=col_names)
         logger.info("table creation completed")
@@ -62,7 +59,7 @@ def make_dataset(path: str, mode: str) -> None:
 
         logger.info("extracting csv file from table")
         # export data in table to csv file
-        database.db_select_data_to_csv(mode)
+        database.db_export_data_to_csv(mode)
 
     except Exception as exception:
         logger.exception(exception)
@@ -70,6 +67,6 @@ def make_dataset(path: str, mode: str) -> None:
 
 
 if "__main__" == __name__:
-    path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-    # make_dataset(f"{path}/data/raw/train/", "train")
-    make_dataset(f"{path}/data/raw/test/", "test")
+    base_path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
+    # make_dataset(f"{base_path}/data/raw/train/", "train")
+    make_dataset(f"{base_path}/data/raw/test/", "test")

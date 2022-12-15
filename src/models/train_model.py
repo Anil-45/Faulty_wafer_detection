@@ -1,17 +1,16 @@
 """This is the Entry point for Training the Machine Learning Model."""
 
 import os
+
 from sklearn.model_selection import train_test_split
 
+from ..data import DataLoader, DataValidation, make_dataset
+from ..features import Preprocessor
+from ..logger import AppLogger
 from .clustering import KMeansClustering
+from .constants import COLUMNS_WITH_ZERO_STD_DEV
 from .tuner import ModelFinder
 from .utils import Utils
-
-from ..features import Preprocessor
-from ..data import DataLoader
-from ..data import DataValidation
-from ..data import make_dataset
-from ..logger import AppLogger
 
 MODE = "train"
 
@@ -22,8 +21,6 @@ class Train:
     def __init__(self, train_path: str) -> None:
         """Initialize required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
         self.logger = AppLogger().get_logger(f"{path}/logs/train_model.log")
         if train_path is not None:
             self.pred_data_val = DataValidation(train_path, mode=MODE)
@@ -55,13 +52,9 @@ class Train:
                 # missing value imputation
                 X = preprocessor.impute_missing_values(X)
 
-            # check further which columns do not contribute to predictions
-            # if the standard deviation for a column is zero,
-            # it means that the column has constant values
-            # and they are giving the same output both for good and bad sensors
-            # prepare the list of such columns to drop
-            cols_to_drop = preprocessor.get_cols_with_zero_std_dev(X)
-
+            # columns with zero std do not contribute to the data
+            # such columns are found and stored to COLUMNS_WITH_ZERO_STD_DEV
+            cols_to_drop = COLUMNS_WITH_ZERO_STD_DEV
             # drop the columns obtained above
             X = preprocessor.remove_columns(X, cols_to_drop)
 
@@ -108,11 +101,9 @@ class Train:
                 utils = Utils()
                 utils.save_model(best_model, best_model_name + str(i))
 
-            # logging the successful Training
             self.logger.info("Successful End of Training")
 
         except Exception as exception:
-            # logging the unsuccessful Training
             self.logger.error("Unsuccessful End of Training")
             self.logger.exception(exception)
             raise Exception from exception

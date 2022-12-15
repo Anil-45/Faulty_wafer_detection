@@ -1,6 +1,7 @@
 """Transform data."""
 
 import os
+
 import pandas as pd
 
 from ..logger import AppLogger
@@ -12,8 +13,6 @@ class DataTransform:
     def __init__(self, mode: str) -> None:
         """Initialize required variables."""
         path = str(os.path.abspath(os.path.dirname(__file__))) + "/../.."
-        if not os.path.exists(f"{path}/logs/"):
-            os.makedirs(f"{path}/logs/")
 
         if "train" == str(mode):
             self.accepted_dir = f"{path}/data/interim/train/accepted/"
